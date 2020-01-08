@@ -136,7 +136,8 @@ defmodule ExAws.S3.DirectUpload do
       %{"x-amz-credential": credential()},
       %{"x-amz-date": @date_util.today_datetime()},
       ["starts-with", "$Content-Type", upload.mimetype],
-      ["starts-with", "$key", upload.path]
+      ["starts-with", "$key", upload.path],
+      ["starts-with", "$success_action_redirect", ""]
     ]
     conditions = case security_token() do
       nil -> conditions
