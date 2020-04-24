@@ -41,7 +41,11 @@ defmodule ExAws.S3.DirectUpload do
   """
   defstruct file_name: nil, mimetype: nil, path: nil, acl: "public-read", bucket: nil
 
-  @date_util Application.get_env(:ex_aws, :s3_direct_upload_date_util, ExAws.S3.DirectUpload.DateUtil)
+  @date_util Application.get_env(
+               :ex_aws,
+               :s3_direct_upload_date_util,
+               ExAws.S3.DirectUpload.DateUtil
+             )
 
   @doc """
 
@@ -85,7 +89,7 @@ defmodule ExAws.S3.DirectUpload do
   """
   def presigned_json(%ExAws.S3.DirectUpload{} = upload) do
     presigned(upload)
-    |> Poison.encode!
+    |> Poison.encode!()
   end
 
   defp credentials(%ExAws.S3.DirectUpload{} = upload) do
@@ -98,10 +102,13 @@ defmodule ExAws.S3.DirectUpload do
       acl: upload.acl,
       key: file_path(upload)
     }
-    credentials = case security_token() do
-      nil -> credentials
-      _ -> credentials |> Map.put(:"x-amz-security-token", security_token())
-    end
+
+    credentials =
+      case security_token() do
+        nil -> credentials
+        _ -> credentials |> Map.put(:"x-amz-security-token", security_token())
+      end
+
     credentials
   end
 
@@ -124,8 +131,8 @@ defmodule ExAws.S3.DirectUpload do
       expiration: @date_util.expiration_datetime,
       conditions: conditions(upload)
     }
-    |> Poison.encode!
-    |> Base.encode64
+    |> Poison.encode!()
+    |> Base.encode64()
   end
 
   defp conditions(%ExAws.S3.DirectUpload{} = upload) do
@@ -139,15 +146,18 @@ defmodule ExAws.S3.DirectUpload do
       ["starts-with", "$key", upload.path],
       ["starts-with", "$success_action_redirect", ""]
     ]
-    conditions = case security_token() do
-      nil -> conditions
-      _ -> [%{"x-amz-security-token" => security_token()} | conditions]
-    end
+
+    conditions =
+      case security_token() do
+        nil -> conditions
+        _ -> [%{"x-amz-security-token" => security_token()} | conditions]
+      end
+
     conditions
   end
 
   defp url(%ExAws.S3.DirectUpload{bucket: bucket}) do
-    "https://#{bucket}.s3.#{region()}.amazonaws.com"
+    "#{scheme()}#{bucket}.s3.#{region()}.amazonaws.com"
   end
 
   defp credential() do
@@ -182,4 +192,8 @@ defmodule ExAws.S3.DirectUpload do
     |> Map.get(:region)
   end
 
+  defp scheme do
+    ExAws.Config.new(:s3)
+    |> Map.get(:scheme)
+  end
 end
